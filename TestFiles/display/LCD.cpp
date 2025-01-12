@@ -1,6 +1,6 @@
-#include "Arduino.h"
-#include "LCD.h"
-#include <SPI.h>
+#include <wiringPi.h> // For GPIO control
+#include <wiringPiSPI.h> // For SPI communication
+#include <unistd.h> // For delay (optional)
 
 
 #define  LCM_RESET  9
@@ -10,23 +10,21 @@
 #if Arduino_SPI
 void ER5517Basic::SPIInit()
 {
-	pinMode(LCM_CS, OUTPUT);
-	SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-	SPI.begin();
+  wiringPiSetup(); // Initialize WiringPi
+  pinMode(LCM_CS, OUTPUT); // Set chip select pin as output
+  wiringPiSPISetup(0, 8000000); // Initialize SPI on channel 0 with 8 MHz clock
 }
 void ER5517Basic::SPISetCs(int cs)
 {
-	if(cs)
-		digitalWrite(LCM_CS,HIGH);
-	else
-	  digitalWrite(LCM_CS,LOW);
+    digitalWrite(LCM_CS, cs ? HIGH : LOW);
 }
 unsigned char ER5517Basic::SPIRwByte(unsigned char value)
 {
-	unsigned char rec;
-	rec = SPI.transfer(value);
-	return rec;
+    unsigned char data = value;
+    wiringPiSPIDataRW(0, &data, 1); // Perform SPI transaction on channel 0
+    return data;
 }
+
 void ER5517Basic::SPI_CmdWrite(int cmd)
 {
   ER5517.SPISetCs(0);    //SS_RESET;
@@ -3321,9 +3319,9 @@ void ER5517Basic::System_Check_Temp(void)
     j = ER5517.LCD_StatusRead();
     if((j&0x02)==0x00)    
     {
-      delay(2);                  //MCU too fast, necessary
+      usleep(milliseconds * 2000);                  //MCU too fast, necessary
       ER5517.LCD_CmdWrite(0x01);
-      delay(2);                  //MCU too fast, necessary
+      usleep(milliseconds * 2000);                  //MCU too fast, necessary
       temp = ER5517.LCD_DataRead();
       if((temp & 0x80) == 0x80)       //Check CCR register's PLL is ready or not
       {
@@ -3332,9 +3330,9 @@ void ER5517Basic::System_Check_Temp(void)
       }
       else
       {
-        delay(2); //MCU too fast, necessary
+        usleep(milliseconds * 2000); //MCU too fast, necessary
         ER5517.LCD_CmdWrite(0x01);
-        delay(2); //MCU too fast, necessary
+        usleep(milliseconds * 2000); //MCU too fast, necessary
         ER5517.LCD_DataWrite(0x80);
       }
     }
@@ -3385,9 +3383,9 @@ void ER5517Basic::PLL_Initial(void)
 	ER5517.LCD_DataWrite(lpllN_cclk);
 
 	ER5517.LCD_CmdWrite(0x00);
-	delayMicroseconds(1);
+	usleep(milliseconds * 2000);
 	ER5517.LCD_DataWrite(0x80);
-	delay(1);
+	usleep(milliseconds * 2000);
 
 
 
@@ -3523,15 +3521,15 @@ void ER5517Basic::SDRAM_initail(void)
   ER5517.LCD_RegisterWrite(0xe3,sdram_itv >>8);
   ER5517.LCD_RegisterWrite(0xe4,0x01);
   ER5517.Check_SDRAM_Ready();
-  delay(1);
+  usleep(milliseconds * 1000);
 }
 void ER5517Basic::HW_Reset(void)
 {
 	pinMode(LCM_RESET, OUTPUT);
   digitalWrite(LCM_RESET, LOW);
-  delay(100);
+  usleep(milliseconds * 100);
   digitalWrite(LCM_RESET, HIGH);
-  delay(200);
+  usleep(milliseconds * 200);
 }
 
 void ER5517Basic::initial(void)

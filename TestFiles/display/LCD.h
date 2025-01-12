@@ -1,8 +1,7 @@
 #ifndef LCD_h
 #define LCD_h
-#include "Arduino.h"
-#include <avr/pgmspace.h>
-#include <SPI.h>
+#include <wiringPi.h> // For GPIO control
+#include <unistd.h>   // For delay
 
 #define Arduino_SPI     1 //1:use SPI to drive
 

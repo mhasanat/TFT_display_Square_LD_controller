@@ -1,47 +1,41 @@
 #ifndef LCD_init_h
 #define LCD_init_h
-#include "Arduino.h"
-//#include <avr/pgmspace.h>
-#include <SPI.h>
+#include <wiringPi.h>       // For GPIO control
+#include <wiringPiSPI.h>    // For SPI communication
+#include <unistd.h>         // For delay
 
-#define  SPI_CS     2
-#define  SPI_CLK    1  // DUE   13
-#define  SPI_DI     0 //  DUE   11 
-
-
-#define  SPI_CS_RES   digitalWrite(SPI_CS, LOW)
-#define  SPI_CS_SET   digitalWrite(SPI_CS, HIGH)
-#define  SPI_CLK_RES   digitalWrite(SPI_CLK, LOW)
-#define  SPI_CLK_SET   digitalWrite(SPI_CLK, HIGH)
-#define  SPI_DI_RES   digitalWrite(SPI_DI, LOW)
-#define  SPI_DI_SET   digitalWrite(SPI_DI, HIGH)
+#define SPI_CS     10  // Chip Select
+#define SPI_CLK    11  // Clock
+#define SPI_DI     12  // Data In
 
 
+#define SPI_CS_RES   digitalWrite(SPI_CS, LOW)
+#define SPI_CS_SET   digitalWrite(SPI_CS, HIGH)
+#define SPI_CLK_RES  digitalWrite(SPI_CLK, LOW)
+#define SPI_CLK_SET  digitalWrite(SPI_CLK, HIGH)
+#define SPI_DI_RES   digitalWrite(SPI_DI, LOW)
+#define SPI_DI_SET   digitalWrite(SPI_DI, HIGH)
 
-void HW_SPI_Send(unsigned char i)
-{ 
-  SPI.transfer( i);
+
+
+void HW_SPI_Send(unsigned char i) {
+    unsigned char data = i;
+    wiringPiSPIDataRW(0, &data, 1); // Send and receive 1 byte over SPI channel 0
 }
 
 
-
-
 //RGB+9b_SPI(rise)
- void SW_SPI_Send(unsigned char i)
-{  
-   unsigned char n;
-   
-   for(n=0; n<8; n++)			
-   {       
-			SPI_CLK_RES;
-			if(i&0x80)SPI_DI_SET ;
-                        else SPI_DI_RES ;
-
-			SPI_CLK_SET;
-
-			i<<=1;
-	  
-   }
+void SW_SPI_Send(unsigned char i) {
+    unsigned char n;
+    for (n = 0; n < 8; n++) {
+        SPI_CLK_RES;
+        if (i & 0x80)
+            SPI_DI_SET;
+        else
+            SPI_DI_RES;
+        SPI_CLK_SET;
+        i <<= 1;
+    }
 }
 
 
@@ -71,15 +65,18 @@ void SPI_WriteData(unsigned char i)
 } 
 
 
-void ST7701S_Initial(void)
-{  
-     pinMode(SPI_CS,   OUTPUT);
+void ST7701S_Initial(void) {
+    // Initialize WiringPi and GPIO pins
+    wiringPiSetup();
+    pinMode(SPI_CS, OUTPUT);
     digitalWrite(SPI_CS, HIGH);
-    pinMode(SPI_CLK,   OUTPUT);
+    pinMode(SPI_CLK, OUTPUT);
     digitalWrite(SPI_CLK, LOW);
-    pinMode(SPI_DI,   OUTPUT);
-    digitalWrite(SPI_DI, LOW);  
-  
+    pinMode(SPI_DI, OUTPUT);
+    digitalWrite(SPI_DI, LOW);
+
+    // SPI initialization
+    wiringPiSPISetup(0, 8000000); // SPI channel 0, 8 MHz clock
 	
 	SPI_WriteComm(0xFF);
 	SPI_WriteData(0x77);
@@ -165,7 +162,7 @@ void ST7701S_Initial(void)
 	SPI_WriteData(0x78);
 	SPI_WriteComm(0xC2);
 	SPI_WriteData(0x78);
-	delay(20);
+	usleep(milliseconds * 2000); // Delay in microseconds
 	SPI_WriteComm(0xE0);
 	SPI_WriteData(0x00);
 	SPI_WriteData(0x1B);
@@ -307,7 +304,7 @@ void ST7701S_Initial(void)
 	SPI_WriteData(0x00);
 	SPI_WriteData(0x00);
 	SPI_WriteComm(0x11);
-	delay(120);
+	usleep(milliseconds * 2000); // Delay in microseconds
 	SPI_WriteComm(0xFF);
 	SPI_WriteData(0x77);
 	SPI_WriteData(0x01);
@@ -317,7 +314,7 @@ void ST7701S_Initial(void)
 	SPI_WriteComm(0xE8);
 	SPI_WriteData(0x00);
 	SPI_WriteData(0x0C);
-	delay(10);
+	usleep(milliseconds * 1000); // Delay in microseconds
 	SPI_WriteComm(0xE8);
 	SPI_WriteData(0x00);
 	SPI_WriteData(0x00);
@@ -337,8 +334,7 @@ void ST7701S_Initial(void)
 	SPI_WriteComm(0x21);
 //	SPI_WriteComm(0x2A);
 	SPI_WriteComm(0x29);
-	delay(20);
-
+	usleep(milliseconds * 2000); // Delay in microseconds
 
 }
 
