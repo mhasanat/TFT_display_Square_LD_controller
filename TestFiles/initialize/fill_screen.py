@@ -3,19 +3,21 @@ from time import sleep
 
 # Initialize SPI
 spi = spidev.SpiDev()
-spi.open(0, 0)  # SPI bus 0, device 0
+spi.open(0, 0)
 spi.max_speed_hz = 500000
 
+# Send a command to the LT7680
 def send_command(command):
-    """Send a command to the LT7680."""
     spi.xfer2([0x00, command])
+    print(f"Sent Command: 0x{command:02X}")
 
+# Send data to the LT7680
 def send_data(data):
-    """Send data to the LT7680."""
     spi.xfer2([0x01, data])
+    print(f"Sent Data: 0x{data:02X}")
 
+# Initialize the display
 def initialize_display():
-    """Initialize the display."""
     send_command(0xFF)  # Enter extended command set
     send_data(0x77)
     send_data(0x01)
@@ -30,17 +32,17 @@ def initialize_display():
     sleep(0.02)         # Wait 20ms
     print("Display initialized.")
 
+# Fill the screen with a single color
 def fill_screen(color):
-    """Fill the screen with a single color."""
     send_command(0x2C)  # Memory Write command
     for _ in range(320 * 240):  # Assuming 320x240 resolution
-        send_data(color)  # Fill with a single 8-bit color
+        send_data(color)  # Fill with the specified color
     print(f"Screen filled with color: 0x{color:02X}")
 
+# Main logic
 try:
-    # Initialize the display and fill the screen
     initialize_display()
-    fill_screen(0xFF)  # Example: Fill screen with white
+    fill_screen(0xFF)  # Example: Fill the screen with white
 finally:
     spi.close()
     print("SPI closed.")
