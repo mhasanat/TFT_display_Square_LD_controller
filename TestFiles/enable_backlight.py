@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 
 # Configure GPIO pin for backlight control
-BACKLIGHT_PIN = 3  # GPIO3 (BCM numbering)
+BACKLIGHT_PIN = 14  # GPIO3 (BCM numbering)
 
 try:
     # Set up GPIO mode
